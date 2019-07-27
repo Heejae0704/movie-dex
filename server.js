@@ -7,7 +7,8 @@ const MOVIE = require('./movies-data-small.json')
 const app = express();
 
 app.use(cors());
-app.use(morgan());
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'common'
+app.use(morgan(morganSetting))
 
 function validateBearerToken(req, res, next) {
     const apiToken = process.env.API_TOKEN
@@ -50,7 +51,17 @@ function handleGetMovie(req, res) {
 
 app.get('/movie', handleGetMovie)
 
-const PORT = 8000;
+app.use((error, req, res, next) => {
+    let response
+    if (process.env.NODE_ENV === 'production') {
+        response = { error: {message: 'server error'}}
+    } else {
+        response = { error }
+    }
+    res.response(500).json(response)
+})
+
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
     console.log(`Server listening at ${PORT}`)
